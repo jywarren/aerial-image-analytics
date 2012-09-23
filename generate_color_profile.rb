@@ -1,10 +1,10 @@
 require 'rubygems'
 require 'RMagick'
 
-samples = 10
+samples = ARGV[0].to_i
 pixels = []
 
-image = Magick::Image::read(ARGV[0]).first
+image = Magick::Image::read(ARGV[1]).first
 
 (0..(image.columns/samples).to_i-1).each do |px|
 	x = px*samples
@@ -29,4 +29,5 @@ r = (r/pixels.length).to_i
 g = (g/pixels.length).to_i
 b = (b/pixels.length).to_i
 
+puts pixels.length
 puts ([r,g,b]).inspect
