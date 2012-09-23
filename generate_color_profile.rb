@@ -12,7 +12,6 @@ image = Magick::Image::read(ARGV[0]).first
 		y = py*samples
 		a = image.export_pixels(x, y, 1, 1, "RGB");
 		pixels << [a[0],a[1],a[2]] # r,g,b
-		puts [a[0],a[1],a[2]] # r,g,b
 	end
 end
 
