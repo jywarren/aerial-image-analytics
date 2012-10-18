@@ -35,8 +35,12 @@ body {
 <div id="graph" style="width:100%;height:200px;"></div>
 
 <div id="controls">
-<input id="cutoff" type="text" value="0" />
-<a onClick="cutoff = $('#cutoff').val()" href="javascript:void(0);">Apply cutoff</a> (in megabytes)
+<input id="cutoff" type="text" value="3.5" />
+<a onClick="cutoff = parseFloat($('#cutoff').val());import_files()" href="javascript:void(0);">Apply cutoff</a> (in megabytes)
+
+
+
+<p id="notice" style="float:right;"></p>
 </div>
 <br />
 
@@ -45,23 +49,37 @@ body {
 
 <script>
 
-  var cutoff = 0 //megabytes
-  var files
+var cutoff = 0 //megabytes
+var files
+var reader = new FileReader();
 
-  function handleFileSelect(evt) {
-    evt.stopPropagation();
-    evt.preventDefault();
+function show_img(img_id,i) {
+	reader.onload = (function(file) {
+		return function(e) {
+			//window.open(e.target.result,'_newtab').focus()
+			//window.location = e.target.result
+			console.log(e.target.result)
+		}
+	})(files[i])
+	reader.readAsDataURL(files[i])
+	// this may not work if popups are blocked
+}
 
-    files = evt.dataTransfer.files; // FileList object.
+function handleFileSelect(evt) {
+	evt.stopPropagation();
+	evt.preventDefault();
 
-    import_files()
+	files = evt.dataTransfer.files; // FileList object.
 
-    }
+	import_files()
+	plot = $.plot($("#graph"),data,flotoptions);
 
-    function import_files() {
+}
+
+function import_files() {
 
     // files is a FileList of File objects. List some properties.
-    var output = [];
+    var output = [],chosen = 0;
     for (var i = 0, f; f = files[i]; i++) {
 
       // Only process image files.
@@ -69,7 +87,6 @@ body {
         continue;
       }
 
-      var reader = new FileReader();
 
       // Closure to capture the file information.
       reader.onload = (function(file) {
@@ -84,20 +101,21 @@ body {
       //reader.readAsDataURL(f);
 
       data[0].data.push([i,f.size])
-
-      output.push('<li id="'+f.name.split('.')[0]+'"><div  id="'+f.name.split('.')[0]+'_img"></div><strong>', escape(f.name), '</strong> (', f.type || 'n/a', ') - ',
+	var image_class = ''
+	if (f.size > cutoff*1000000 && cutoff != 0) { 
+		image_class = 'red'
+		chosen += 1
+	}
+      var img_id = f.name.split('.')[0]
+      output.push('<li class="'+image_class+'" id="'+img_id+'"><div  id="'+img_id+'_img"></div><strong>', escape(f.name), '</a></strong> (', f.type || 'n/a', ') - ',
+	// attempting to link to the image:
+      //output.push('<li class="'+image_class+'" id="'+img_id+'"><div  id="'+img_id+'_img"></div><strong><a href="javascript:void()" onClick="show_img(\''+img_id+'\','+i+')">', escape(f.name), '</a></strong> (', f.type || 'n/a', ') - ',
                   f.size, ' bytes, last modified: ',
                   f.lastModifiedDate ? f.lastModifiedDate.toLocaleDateString() : 'n/a',
                   '</li>');
-    if (f.size > parseFloat(cutoff*1000000)) { 
-	$('#'+f.name.split('.')[0]).addClass('red')
-    console.log(f.name)
-    console.log('chosen')
     }
-    }
-    document.getElementById('list').innerHTML = '<ul>' + output.join('') + '</ul>';
-
-    plot = $.plot($("#graph"),data,flotoptions);
+    $('#list').html('<ul>' + output.join('') + '</ul>')
+    $('#notice').text(chosen+' chosen, '+(chosen/files.length)*100+"%")
   }
 
   function handleDragOver(evt) {
@@ -142,6 +160,9 @@ flotoptions = {
 
 </script>
 
+<div id='footer'>
+<p><a href="https://github.com/jywarren/aerial-image-analytics/">Open source software</a> by <a href="http://publiclaboratory.org">Public Lab</a></p>
+</div>
 
 </body>
 </html>
